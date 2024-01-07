@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Видеоплеер с выбором видео</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f4f4f4;
+    }
+
+    #video-container {
+      width: 70%;
+    }
+
+    #video-player {
+      width: 100%;
+    }
+
+    #video-list {
+      margin-top: 20px;
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    #video-list th, #video-list td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    #video-list th {
+      background-color: #f2f2f2;
+    }
+
+    /* Добавленные стили для выделения */
+    #video-list td:hover {
+      background-color: #e0e0e0;
+    }
+
+    #video-list td.active {
+      background-color: #b3d9ff;
+    }
+
+    #add-video-modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: white;
+      padding: 20px;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+  <div id="video-container">
+    <video id="video-player" controls>
+      <source src="Sucko.mp4" type="video/mp4">
+    </video>
+
+    <table id="video-list">
+      <thead>
+        <tr>
+          <th>Видео</th>
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody id="video-table-body">
+        <!-- Таблица будет заполнена динамически -->
+      </tbody>
+    </table>
+
+    <button onclick="openAddVideoModal()">Добавить видео</button>
+  </div>
+
+  <div id="add-video-modal">
+    <label for="video-title">Название видео:</label>
+    <input type="text" id="video-title">
+
+    <label for="video-source">Источник видео:</label>
+    <input type="text" id="video-source">
+
+    <button onclick="addVideo()">Добавить</button>
+    <button onclick="closeAddVideoModal()">Отмена</button>
+  </div>
+
+  <script>
+    let videoData = JSON.parse(localStorage.getItem('videoData')) || [
+      { title: 'Sucko', source: 'Sucko.mp4' },
+      { title: 'Sicko Mode 3', source: 'Sicko Mode 3.mp4' },
+      { title: 'This Is America 2', source: 'This Is America 2.mp4' }
+    ];
+
+    function saveVideoData() {
+      localStorage.setItem('videoData', JSON.stringify(videoData));
+    }
+
+    function createVideoTable() {
+      const tbody = document.getElementById('video-table-body');
+
+      videoData.forEach((video, index) => {
+        const tr = document.createElement('tr');
+        const tdTitle = document.createElement('td');
+        tdTitle.textContent = video.title;
+        tr.appendChild(tdTitle);
+
+        const tdActions = document.createElement('td');
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Удалить';
+        deleteButton.onclick = () => deleteVideo(index, tr);
+        tdActions.appendChild(deleteButton);
+        tr.appendChild(tdActions);
+
+        // Добавляем обработчик события на клик
+        tr.addEventListener('click', () => changeVideo(video.source, tr));
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function changeVideo(source, clickedRow) {
+      const videoPlayer = document.getElementById('video-player');
+      videoPlayer.src = source;
+      videoPlayer.load();
+
+      // Убираем класс 'active' у предыдущей активной строки
+      const activeRow = document.querySelector('#video-list td.active');
+      if (activeRow) activeRow.classList.remove('active');
+
+      // Добавляем класс 'active' к новой активной строке
+      clickedRow.classList.add('active');
+    }
+
+    function openAddVideoModal() {
+      document.getElementById('add-video-modal').style.display = 'block';
+    }
+
+    function closeAddVideoModal() {
+      document.getElementById('add-video-modal').style.display = 'none';
+    }
+
+    function addVideo() {
+      const title = document.getElementById('video-title').value;
+      const source = document.getElementById('video-source').value;
+
+      if (title && source) {
+        videoData.push({ title, source });
+
+        const tbody = document.getElementById('video-table-body');
+        const tr = document.createElement('tr');
+        const tdTitle = document.createElement('td');
+        tdTitle.textContent = title;
+        tr.appendChild(tdTitle);
+
+        const tdActions = document.createElement('td');
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Удалить';
+        deleteButton.onclick = () => deleteVideo(videoData.length - 1, tr);
+        tdActions.appendChild(deleteButton);
+        tr.appendChild(tdActions);
+
+        // Добавляем обработчик события на клик
+        tr.addEventListener('click', () => changeVideo(source, tr));
+
+        tbody.appendChild(tr);
+
+        saveVideoData();
+        closeAddVideoModal();
+      }
+    }
+
+    function deleteVideo(index, row) {
+      videoData.splice(index, 1);
+      row.remove();
+      saveVideoData();
+    }
+
+    document.addEventListener('DOMContentLoaded', createVideoTable);
+  </script>
+</body>
+</html>
